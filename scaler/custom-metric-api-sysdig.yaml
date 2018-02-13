@@ -1,0 +1,43 @@
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: custom-metrics-apiserver
+  namespace: custom-metrics
+  labels:
+    app: custom-metrics-apiserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: custom-metrics-apiserver
+  template:
+    metadata:
+      labels:
+        app: custom-metrics-apiserver
+    spec:
+      tolerations:
+      - key: beta.kubernetes.io/arch
+        value: arm
+        effect: NoSchedule
+      - key: beta.kubernetes.io/arch
+        value: arm64
+        effect: NoSchedule
+      serviceAccountName: custom-metrics-apiserver
+      containers:
+      - name: custom-metrics-server
+        image: mateobur/custom-metrics-adapter:latest
+        args:
+        - --deploymentname=flask
+        - --servicename=flask
+        - --kubernetesnamespace=default
+        - --targetmetric=net.http.request.count
+        - --sysdigapikey=c30a0cfd-609a-41a6-b822-e8e0d4bdeb0d
+        - --metrics-relist-interval=30s
+        - --v=10
+        - --logtostderr=true
+        ports:
+        - containerPort: 443
+        securityContext:
+          runAsUser: 0
+---
