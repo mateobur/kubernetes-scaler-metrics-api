@@ -1,4 +1,13 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sysdig-key
+type: Opaque
+data:
+  sysdig-key: <base64_version_of_your_sysdig_API_key_here>
+
 ---
+
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
@@ -24,15 +33,22 @@ spec:
         value: arm64
         effect: NoSchedule
       serviceAccountName: custom-metrics-apiserver
+      volumes:
+        - name: sysdig-key
+          secret:
+            secretName: sysdig-key
       containers:
       - name: custom-metrics-server
         image: mateobur/custom-metrics-adapter:latest
+        volumeMounts:
+          - name: sysdig-key
+            mountPath: "/etc/sysdig-key"
+            readOnly: true
         args:
         - --deploymentname=flask
         - --servicename=flask
         - --kubernetesnamespace=default
         - --targetmetric=net.http.request.count
-        - --sysdigapikey=c30a0cfd-609a-41a6-b822-e8e0d4bdeb0d
         - --metrics-relist-interval=30s
         - --v=10
         - --logtostderr=true
